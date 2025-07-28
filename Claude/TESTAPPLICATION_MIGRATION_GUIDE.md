@@ -2,7 +2,7 @@
 
 This guide documents how to migrate a Sylius plugin from using a traditional `tests/Application` setup to the centralized Sylius TestApplication framework.
 
-## Overview 
+## Overview
 
 The Sylius TestApplication eliminates the need to maintain custom test applications for each plugin, reducing maintenance overhead while providing a standardized testing environment.
 
@@ -26,7 +26,7 @@ Add the TestApplication dependency and configure paths:
     "config": {
         "allow-plugins": {
             "symfony/flex": true,
-            "symfony/runtime": false
+            "symfony/runtime": true
         }
     },
     "extra": {
@@ -45,6 +45,8 @@ Add the TestApplication dependency and configure paths:
 }
 ```
 
+Dependencies should be saved in alphabetical order.
+
 **Important Notes:**
 - Use `"sylius/test-application": "^2.0.0@alpha"` but expect to get v2.1.x due to Sylius compatibility requirements
 - **Remove the entire `scripts` section** - node symlink scripts and other custom scripts are no longer needed with TestApplication
@@ -58,6 +60,7 @@ Create the following structure:
 ```
 tests/TestApplication/
 ├── config/
+│   ├── bundles.php
 │   ├── config.yaml
 │   ├── routes.yaml
 │   ├── services.yaml
@@ -70,11 +73,19 @@ tests/TestApplication/
 ├── .env
 ├── .env.test
 ├── .env.local (not committed)
-├── .env.test.local (not committed)
-└── bundles.php
+└── .env.test.local (not committed)
 ```
 
-### 3. Configure Database Connection
+### 3. Update .gitignore
+Add TestApplication local files to .gitignore:
+```gitignore
+/tests/TestApplication/.env.local
+/tests/TestApplication/.env.test.local
+/tests/TestApplication/.env.*.local
+```
+Remove files and directories that are no longer needed (related to the old test application):
+
+### 4. Configure Database Connection
 
 **Important**: Before proceeding, configure your database connection for the TestApplication.
 
@@ -85,9 +96,9 @@ Ask the user for their database configuration:
 
 Create the appropriate `.env.local` and `.env.test.local` files with the user's specific database configuration.
 
-### 4. Configure TestApplication Files
+### 5. Configure TestApplication Files
 
-#### tests/TestApplication/bundles.php
+#### tests/TestApplication/config/bundles.php
 
 **Critical**: All composer dependencies must be registered in bundles.php
 
@@ -97,9 +108,21 @@ Create the appropriate `.env.local` and `.env.test.local` files with the user's 
 declare(strict_types=1);
 
 $bundles = [
-    // Register ALL dependencies from composer.json require-dev
+    // Register ALL plugin dependencies from composer.json (require and require-dev)
+    // which provide Symfony Bundles and are NOT present in sylius/test-application/config/bundles.php
+
+    // Always register your plugin's bundle:
     YourVendor\YourPlugin\YourPluginBundle::class => ['all' => true],
-    // Add other plugin dependencies as needed
+
+    // Register WinzouStateMachineBundle if it is a dependency and not present yet:
+    
+    // Example:
+    //    if (class_exists(winzou\Bundle\StateMachineBundle\winzouStateMachineBundle::class)) {
+    //        $bundles[winzou\Bundle\StateMachineBundle\winzouStateMachineBundle::class] = ['all' => true];
+    //    }
+
+    // Add other plugin dependencies as needed:
+    // Vendor\Dependency\SomeOtherBundle::class => ['all' => true],
 ];
 
 return $bundles;
@@ -109,16 +132,24 @@ return $bundles;
 
 **Check TestApplication package configuration and remove duplicates**:
 
+If service configuration files (e.g., services.yaml) are already imported in the TestApplication package, do not import them again.
+
+If a services.yaml file (or any other service configuration file) contains only comments and no actual service definitions, do not create that file.
+
 ```yaml
 imports:
     - { resource: "@YourPlugin/config/config.yaml" }
     - { resource: "services.yaml" }
     - { resource: "services_test.php" }
 
+# If the plugin provides its own API Platform configuration in a directory other than api_resources
+parameters:
+   sylius_customer_service_api_platform_mapping_path: '%kernel.project_dir%/../../../config/api_platform/'
+
 # Only include plugin-specific configuration that differs from core Sylius
 # Remove duplicates like sylius_shop, sylius_api, framework, etc.
 
-# Add your plugin-specific entity mappings here if needed
+# Add your plugin-specific sylius resource mappings overrides here if needed
 # sylius_customer:
 #     resources:
 #         customer:
@@ -152,19 +183,6 @@ your_plugin:
     resource: "@YourPlugin/config/routes.yaml"
 ```
 
-#### tests/TestApplication/config/services.yaml
-
-Main application services:
-
-```yaml
-services:
-    # Add your plugin-specific services here
-    app.your_service:
-        class: Tests\YourPlugin\Service\YourService
-        arguments:
-            - "@sylius.repository.product"
-```
-
 #### tests/TestApplication/config/services_test.php
 
 Test-specific services only:
@@ -195,7 +213,7 @@ Structure with proper sections:
 ###> sylius/test-application ###
 CONFIGS_TO_IMPORT="@YourPlugin/tests/TestApplication/config/config.yaml"
 ROUTES_TO_IMPORT="@YourPlugin/tests/TestApplication/config/routes.yaml"
-TEST_APP_BUNDLES_PATH="tests/TestApplication/bundles.php"
+TEST_APP_BUNDLES_PATH="tests/TestApplication/config/bundles.php"
 ###< sylius/test-application ###
 
 ###> doctrine/doctrine-bundle ###
@@ -216,7 +234,7 @@ Same structure as .env - default values:
 ###> sylius/test-application ###
 CONFIGS_TO_IMPORT="@YourPlugin/tests/TestApplication/config/config.yaml"
 ROUTES_TO_IMPORT="@YourPlugin/tests/TestApplication/config/routes.yaml"
-TEST_APP_BUNDLES_PATH="tests/TestApplication/bundles.php"
+TEST_APP_BUNDLES_PATH="tests/TestApplication/config/bundles.php"
 ###< sylius/test-application ###
 
 # Add plugin-specific environment variables here
@@ -264,7 +282,15 @@ mkdir -p tests/TestApplication/templates
 touch tests/TestApplication/templates/.gitkeep
 ```
 
-### 5. Update behat.yml.dist
+If the plugin provides its own API Platform configuration in a directory other than api_resources:
+```yaml
+api_platform:
+    mapping:
+        paths:
+            - '%sylius_customer_service_api_platform_mapping_path%'
+```
+
+### 6. Update behat.yml.dist
 
 Update the Behat configuration to use TestApplication:
 
@@ -277,7 +303,7 @@ default:
                 panther:
                     panther:
                         options:
-                            webServerDir: '%paths.base%/vendor/sylius/test-application/public'
+                            webServerDir: '%paths.base%/vendor/sylius/test-application/public' # if using Symfony Panther
 
         FriendsOfBehat\SymfonyExtension:
             bootstrap: vendor/sylius/test-application/config/bootstrap.php
@@ -285,7 +311,7 @@ default:
                 class: Sylius\TestApplication\Kernel
 ```
 
-### 6. Update phpunit.xml.dist
+### 7. Update phpunit.xml.dist
 
 Update PHPUnit configuration:
 
@@ -297,16 +323,6 @@ Update PHPUnit configuration:
     </php>
     <!-- Your test configuration -->
 </phpunit>
-```
-
-### 7. Update .gitignore
-
-Add TestApplication local files to .gitignore:
-
-```gitignore
-/tests/TestApplication/.env.local
-/tests/TestApplication/.env.test.local
-/tests/TestApplication/.env.*.local
 ```
 
 ### 8. Update GitHub Actions Workflow
@@ -350,7 +366,7 @@ Update `.github/workflows/build.yml`:
 
 ### 9. Fix Asset Compilation Issues
 
-If @vendor alias doesn't work, use relative paths. Future TestApplication versions will have @vendor alias support.
+If @vendor alias doesn't work, use paths relative to the `vendor` directory.
 
 **Important**: Don't modify vendor files - use relative paths instead.
 
@@ -420,6 +436,12 @@ Run tests in this exact order and ensure ALL pass:
 3. **PHPUnit (Unit Tests)**:
    ```bash
    APP_ENV=test vendor/bin/phpunit
+   ```
+
+4. **PHPStan (Integration Tests)**: 
+# If there are phpstan tests
+   ```bash
+   APP_ENV=test vendor/bin/phpstan analyse 
    ```
 
 4. **Behat (Acceptance Tests)**:
@@ -501,7 +523,6 @@ rm -f bin/create_node_symlink.php
 - [ ] GitHub Actions workflow updated
 - [ ] `.gitignore` updated for local env files
 - [ ] Old `tests/Application` directory removed
-- [ ] `scripts` section removed from composer.json
 
 ## Benefits of Migration
 
