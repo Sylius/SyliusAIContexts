@@ -31,14 +31,18 @@ Copy any template overrides:
 cp -r tests/Application/templates/bundles/* tests/TestApplication/templates/bundles/
 ```
 
-### 3. Check Configuration Files
-Review `tests/Application/config/` for:
-- Custom fixtures in `sylius_fixtures` section
-- Service configurations
-- Resource mapping overrides
-- Custom routing
+### 3. Check Configuration Files - MANDATORY FILE-BY-FILE REVIEW
 
-**IMPORTANT**: Copy ALL custom configuration to `tests/TestApplication/config/config.yaml`. Do not create separate configuration files - consolidate everything into config.yaml which you created in Step 2.
+**CRITICAL**: You MUST examine each file individually. Do NOT skip this step.
+
+#### Check These Files:
+1. `tests/Application/config/services.yaml` - Look for: parameters, custom services
+2. `tests/Application/config/services_test.yaml` - Look for: test services, workarounds
+3. `tests/Application/config/routes.yaml` - Look for: custom route imports
+4. `tests/Application/config/packages/*.yaml` - Look for: package-specific configs
+5. `tests/Application/config/sylius/*.php` - Look for: Sylius-specific configs
+
+**Copy everything relevant to `tests/TestApplication/config/config.yaml`**
 
 ### 4. Check for Translations
 ```bash
@@ -50,6 +54,13 @@ Copy any custom translations:
 cp -r tests/Application/translations/* tests/TestApplication/translations/
 ```
 
+## Validation Commands
+
+Run these to verify nothing was missed:
+- `grep "parameters:" tests/Application/config/services*.yaml` vs `tests/TestApplication/config/config.yaml`
+- `grep "services:" tests/Application/config/services*.yaml` vs `tests/TestApplication/config/config.yaml`
+- Compare file counts: `find tests/Application/config/packages/ -name "*.yaml" | wc -l`
+
 ## Completion Checklist
 
 Verify you have copied:
@@ -59,7 +70,9 @@ Verify you have copied:
 - [ ] Custom service configurations → Added to config.yaml
 - [ ] Custom translations (if any)
 - [ ] Custom routing → Added to routes.yaml (if needed)
-- [ ] All custom config consolidated in config.yaml
+- [ ] Package-specific configurations → Added to config.yaml
+- [ ] Sylius-specific configurations → Added to config.yaml
+- [ ] **VALIDATION**: Ran comparison commands above and verified nothing was missed
 - [ ] ⚠️ Assets and webpack config NOT copied
 
 ## Commit Changes
