@@ -16,12 +16,14 @@ The Sylius TestApplication eliminates the need to maintain custom test applicati
 
 ### 1. Update composer.json
 
+Update sylius/sylius to ^1.14 version.
+
 Add the TestApplication dependency and configure paths:
 
 ```json
 {
     "require-dev": {
-        "sylius/test-application": "^2.0.0@alpha"
+        "sylius/test-application": "^1.14.x-dev"
     },
     "config": {
         "allow-plugins": {
@@ -34,12 +36,7 @@ Add the TestApplication dependency and configure paths:
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\YourPlugin\\": [
-                "tests/TestApplication/src",
-                "tests/Behat",
-                "tests/Integration",
-                "tests/Unit"
-            ]
+            "Tests\\YourPlugin\\": "tests/TestApplication/src"
         }
     }
 }
@@ -48,8 +45,6 @@ Add the TestApplication dependency and configure paths:
 Dependencies should be saved in alphabetical order.
 
 **Important Notes:**
-- Use `"sylius/test-application": "^2.0.0@alpha"` but expect to get v2.1.x due to Sylius compatibility requirements
-- **Remove the entire `scripts` section** - node symlink scripts and other custom scripts are no longer needed with TestApplication
 - Ensure `public-dir` is in the `extra` section, not `config` section
 - Update `autoload-dev` to include all necessary test paths
 
@@ -91,7 +86,7 @@ Remove files and directories that are no longer needed (related to the old test 
 
 Ask the user for their database configuration:
 - Database host and port
-- Database credentials (username/password)  
+- Database credentials (username/password)
 - Database name pattern
 
 Create the appropriate `.env.local` and `.env.test.local` files with the user's specific database configuration.
@@ -138,7 +133,7 @@ If a services.yaml file (or any other service configuration file) contains only 
 
 ```yaml
 imports:
-    - { resource: "@YourPlugin/config/config.yaml" }
+    - { resource: "@YourPlugin/config/config.yaml" } # or "@YourPlugin/Resources/config/config.yaml" if using old structure
     - { resource: "services.yaml" }
     - { resource: "services_test.php" }
 
@@ -156,10 +151,6 @@ parameters:
 #             classes:
 #                 model: Tests\YourPlugin\Entity\Customer
 #                 repository: YourPlugin\Repository\CustomerRepository
-
-twig:
-    paths:
-        '%kernel.project_dir%/../../../tests/TestApplication/templates': ~
 
 # Only add doctrine mapping if you have custom entities
 # Use type: attribute for modern Doctrine attributes or type: xml for XML mapping
@@ -211,8 +202,8 @@ Structure with proper sections:
 
 ```
 ###> sylius/test-application ###
-CONFIGS_TO_IMPORT="@YourPlugin/tests/TestApplication/config/config.yaml"
-ROUTES_TO_IMPORT="@YourPlugin/tests/TestApplication/config/routes.yaml"
+CONFIGS_TO_IMPORT="@YourPlugin/tests/TestApplication/config/config.yaml" // or ../../../../tests/TestApplication/config/config.yaml if using old structure
+ROUTES_TO_IMPORT="@YourPlugin/tests/TestApplication/config/routes.yaml" // or ../../../../tests/TestApplication/config/routes.yaml if using old structure
 TEST_APP_BUNDLES_PATH="tests/TestApplication/config/bundles.php"
 ###< sylius/test-application ###
 
@@ -232,8 +223,8 @@ Same structure as .env - default values:
 
 ```
 ###> sylius/test-application ###
-CONFIGS_TO_IMPORT="@YourPlugin/tests/TestApplication/config/config.yaml"
-ROUTES_TO_IMPORT="@YourPlugin/tests/TestApplication/config/routes.yaml"
+CONFIGS_TO_IMPORT="@YourPlugin/tests/TestApplication/config/config.yaml" // or ../../../../tests/TestApplication/config/config.yaml if using old structure
+ROUTES_TO_IMPORT="@YourPlugin/tests/TestApplication/config/routes.yaml" // or ../../../../tests/TestApplication/config/routes.yaml if using old structure
 TEST_APP_BUNDLES_PATH="tests/TestApplication/config/bundles.php"
 ###< sylius/test-application ###
 
@@ -243,7 +234,7 @@ YOUR_PLUGIN_SETTING=value
 ###< your-plugin ###
 ```
 
-#### tests/TestApplication/.env.local 
+#### tests/TestApplication/.env.local
 
 **Not committed** - your specific overrides:
 
@@ -364,13 +355,77 @@ Update `.github/workflows/build.yml`:
 
 ```
 
-### 9. Fix Asset Compilation Issues
+### 9. Migrate Plugin Assets
+
+**CRITICAL**: Asset structure must be properly migrated to work with TestApplication.
+
+#### Case 1: Assets in main directory (`assets/` folder exists)
+
+If your plugin has an `assets/` folder in the root directory, ensure it contains the proper structure:
+
+```
+assets/
+├── admin/
+│   └── entrypoint.js
+└── shop/
+    └── entrypoint.js
+```
+
+Both `entrypoint.js` files serve as the main entry points for webpack compilation.
+
+#### Case 2: Assets in old structure (`src/Resources/` folder)
+
+If your plugin has assets in `src/Resources/`, they must be moved to the new structure:
+
+**Move from:**
+```
+src/Resources/
+├── private/
+│   ├── js/
+│   └── scss/
+└── public/
+    ├── js/
+    └── css/
+```
+
+**Move to:**
+```
+assets/
+├── admin/
+│   ├── entrypoint.js  # Main entry point
+│   ├── js/
+│   └── scss/
+└── shop/
+    ├── entrypoint.js  # Main entry point
+    ├── js/
+    └── scss/
+```
+
+**Migration Steps:**
+1. Create `assets/admin/` and `assets/shop/` directories
+2. Move relevant files from `src/Resources/private/` to appropriate admin/shop folders
+3. Create `entrypoint.js` files in both `admin/` and `shop/` directories
+4. Update import paths in the entrypoint files
+5. Remove old `src/Resources/` asset directories
+
+**Example entrypoint.js content:**
+```javascript
+// assets/admin/entrypoint.js
+import './scss/admin.scss';
+import './js/admin.js';
+
+// assets/shop/entrypoint.js  
+import './scss/shop.scss';
+import './js/shop.js';
+```
+
+### 10. Fix Asset Compilation Issues
 
 If @vendor alias doesn't work, use paths relative to the `vendor` directory.
 
 **Important**: Don't modify vendor files - use relative paths instead.
 
-### 10. Complete Migration Process
+### 11. Complete Migration Process
 
 Follow these steps in the correct order:
 
@@ -438,13 +493,12 @@ Run tests in this exact order and ensure ALL pass:
    APP_ENV=test vendor/bin/phpunit
    ```
 
-4. **PHPStan (Integration Tests)**: 
-# If there are phpstan tests
+4. **PHPSpec (Specification Tests)** (if exists):
    ```bash
-   APP_ENV=test vendor/bin/phpstan analyse 
+   vendor/bin/phpspec run
    ```
 
-4. **Behat (Acceptance Tests)**:
+5. **Behat (Acceptance Tests)**:
    ```bash
    APP_ENV=test vendor/bin/behat --no-interaction
    ```
@@ -478,7 +532,7 @@ rm -f bin/create_node_symlink.php
 
 **Issue**: Services in wrong files
 
-**Solution**: 
+**Solution**:
 - Main application services go in `services.yaml`
 - Test-specific services go in `services_test.php`
 
@@ -492,47 +546,19 @@ rm -f bin/create_node_symlink.php
 
 **Issue**: Too much unnecessary configuration
 
-**Solution**: 
+**Solution**:
 - Check TestApplication package configuration and remove duplicates
-- Remove configurations like `sylius_shop`, `sylius_api`, `framework`, `sylius_state_machine_abstraction`, `sylius_twig_hooks`, `fos_elastica` that are provided by core
 - Keep only plugin-specific configuration
 
 ### Environment File Organization
 
 **Issue**: Huge mess in env files
 
-**Solution**: 
+**Solution**:
 - Structure `.env` and `.env.test` with proper sections
 - Keep default values in `.env` and `.env.test`
 - Put customizations in `.env.local` and `.env.test.local`
 - Follow the pattern: `###> package-name ###` sections
-
-## Post-Migration Checklist
-
-- [ ] All composer dependencies registered in bundles.php
-- [ ] No duplicate configuration imports
-- [ ] Services properly organized (services.yaml vs services_test.php)
-- [ ] Database configuration asked and configured
-- [ ] Environment files properly structured with sections
-- [ ] Webpack builds without vendor file modifications
-- [ ] Templates directory exists with .gitkeep
-- [ ] **ECS passes**
-- [ ] **PHPStan passes**
-- [ ] **PHPUnit passes**
-- [ ] **Behat passes (all directories)**
-- [ ] GitHub Actions workflow updated
-- [ ] `.gitignore` updated for local env files
-- [ ] Old `tests/Application` directory removed
-
-## Benefits of Migration
-
-- ✅ Eliminates custom test application maintenance
-- ✅ Standardized testing environment across all plugins
-- ✅ Reduced repository size and complexity
-- ✅ No more node symlink management
-- ✅ Automatic updates with TestApplication releases
-- ✅ Simplified composer.json configuration
-- ✅ Modern environment file organization
 
 ## Critical Success Factors
 
