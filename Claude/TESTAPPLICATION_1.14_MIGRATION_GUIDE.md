@@ -202,9 +202,9 @@ Structure with proper sections:
 
 ```
 ###> sylius/test-application ###
-CONFIGS_TO_IMPORT="@YourPlugin/tests/TestApplication/config/config.yaml" // or ../../../../tests/TestApplication/config/config.yaml if using old structure
-ROUTES_TO_IMPORT="@YourPlugin/tests/TestApplication/config/routes.yaml" // or ../../../../tests/TestApplication/config/routes.yaml if using old structure
-TEST_APP_BUNDLES_PATH="tests/TestApplication/config/bundles.php"
+SYLIUS_TEST_APP_CONFIGS_TO_IMPORT="@YourPlugin/tests/TestApplication/config/config.yaml" // or ../../../../tests/TestApplication/config/config.yaml if using old structure
+SYLIUS_TEST_APP_ROUTES_TO_IMPORT="@YourPlugin/tests/TestApplication/config/routes.yaml" // or ../../../../tests/TestApplication/config/routes.yaml if using old structure
+SYLIUS_TEST_APP_BUNDLES_PATH="tests/TestApplication/config/bundles.php"
 ###< sylius/test-application ###
 
 ###> doctrine/doctrine-bundle ###
@@ -223,9 +223,9 @@ Same structure as .env - default values:
 
 ```
 ###> sylius/test-application ###
-CONFIGS_TO_IMPORT="@YourPlugin/tests/TestApplication/config/config.yaml" // or ../../../../tests/TestApplication/config/config.yaml if using old structure
-ROUTES_TO_IMPORT="@YourPlugin/tests/TestApplication/config/routes.yaml" // or ../../../../tests/TestApplication/config/routes.yaml if using old structure
-TEST_APP_BUNDLES_PATH="tests/TestApplication/config/bundles.php"
+SYLIUS_TEST_APP_CONFIGS_TO_IMPORT="@YourPlugin/tests/TestApplication/config/config.yaml" // or ../../../../tests/TestApplication/config/config.yaml if using old structure
+SYLIUS_TEST_APP_ROUTES_TO_IMPORT="@YourPlugin/tests/TestApplication/config/routes.yaml" // or ../../../../tests/TestApplication/config/routes.yaml if using old structure
+SYLIUS_TEST_APP_BUNDLES_PATH="tests/TestApplication/config/bundles.php"
 ###< sylius/test-application ###
 
 # Add plugin-specific environment variables here
