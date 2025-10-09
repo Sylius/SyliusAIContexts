@@ -1,99 +1,169 @@
-# Configuration Restructuring
+# Configuration Restructuring (Optional)
 
 ## Workflow Pattern
-Each step follows: **Execute → Validate → Fix → Commit**
+Each step follows: **Execute → Validate → Fix**
+
+## When to Execute
+This step is OPTIONAL. Execute only if `src/Resources/` directory exists.
 
 ## Commands
 
-### 1. Check Current Structure
+### 1. Check if Migration is Needed
 ```
-Glob: "src/Resources/config/**/*"
+Bash: ls src/Resources/ 2>/dev/null || echo "SKIP"
 ```
-If no results found, configuration is already in root - skip to step 5 (Update Plugin Class)
+If output is "SKIP", skip entire step (jump to next migration step).
 
-### 2. Create New Directories (if needed)
+### 2. Move Configuration Files
 ```
-Bash: mkdir -p config/grids/admin config/grids/shop config/routing config/services config/validation config/serialization config/doctrine config/api_resources/resources/admin config/api_resources/resources/shop config/api_resources/properties config/twig_hooks/admin config/twig_hooks/shop translations templates/admin templates/shop
+Bash: find src/Resources/config -type f 2>/dev/null
 ```
-
-### 3. Move Configuration Files (if src/Resources exists)
+If files found:
 ```
-Glob: "src/Resources/config/**/*"
-```
-For each file found:
-```
-Read src/Resources/config/{filename}
-Write config/{filename}
+Bash: mkdir -p config
+Bash: cp -r src/Resources/config/* config/
 ```
 
-### 4. Move Translation Files (if src/Resources exists)
+Alternative (preserving git history):
 ```
-Glob: "src/Resources/translations/**/*"
-```
-For each file found:
-```
-Read src/Resources/translations/{filename}
-Write translations/{filename}
+Bash: git mv src/Resources/config/* config/
 ```
 
-### 5. Move Templates (if src/Resources exists)
+### 3. Move Translation Files
 ```
-Glob: "src/Resources/views/**/*"
+Bash: find src/Resources/translations -type f 2>/dev/null
 ```
-For each file found:
+If files found:
 ```
-Read src/Resources/views/{filepath}
-Write templates/{filepath}
+Bash: mkdir -p translations
+Bash: cp -r src/Resources/translations/* translations/
 ```
-**Note**: Change Admin → admin, Shop → shop (lowercase)
 
-### 6. Update Plugin Class
+Alternative (preserving git history):
+```
+Bash: git mv src/Resources/translations/* translations/
+```
+
+### 4. Move Template Files
+```
+Bash: find src/Resources/views -type f 2>/dev/null
+```
+If files found:
+```
+Bash: mkdir -p templates
+Bash: cp -r src/Resources/views/* templates/
+```
+
+Alternative (preserving git history):
+```
+Bash: git mv src/Resources/views/* templates/
+```
+
+**Note**: Do NOT rename folders or files at this stage. Template naming conventions will be handled in Template Migration step.
+
+### 5. Update Plugin Class - Add getPath()
 ```
 Glob: "src/*Plugin.php"
 Read {plugin_file}
+```
+Check if `getPath()` method already exists.
+If not, add it:
+```
 Edit {plugin_file}:
-Add method:
-public function getPath(): string
-{
-    return \dirname(__DIR__);
-}
+Find the last method in the class (before closing brace)
+Add after the last method:
+
+    public function getPath(): string
+    {
+        return \dirname(__DIR__);
+    }
 ```
 
-### 7. Update DependencyInjection
+### 6. Update Extension Class - FileLocator Path
 ```
 Glob: "src/DependencyInjection/*Extension.php"
+Read {extension_file}
+```
+Look for FileLocator usage:
+```
 Edit {extension_file}:
-- new FileLocator(__DIR__ . '/../Resources/config') 
-→ new FileLocator(__DIR__ . '/../../config')
+Replace:
+- new FileLocator(__DIR__ . '/../Resources/config')
++ new FileLocator(__DIR__ . '/../../config')
 ```
 
-### 8. Update Config Imports (if files were moved)
+### 7. Update Resource Paths in Config Files
 ```
-Edit config/config.yaml:
-Replace imports section with:
-imports:
-    - { resource: "services.xml" }
-    - { resource: "resources.yaml" }
-    - { resource: "routing.yaml" }
-    - { resource: "grids/*.yaml" }
-    - { resource: "validation/*.xml" }
-    - { resource: "serialization/*.xml" }
-    - { resource: "twig_hooks/**/*.yaml" }
+Grep: "Resources/config" --include="*.yaml" --include="*.yml" path="config/"
+Grep: "Resources/config" --include="*.yaml" --include="*.yml" path="tests/TestApplication/config/"
+```
+For each file with matches:
+```
+Read {file}
+Edit {file}:
+Replace all occurrences:
+- @{PluginName}/Resources/config/ → @{PluginName}/config/
 ```
 
-### 9. Validate
-```
-Bash: vendor/bin/console debug:container --env=dev
-```
-Expected: Container compiles successfully
+Common files to check:
+- `config/routes.yaml`
+- `config/routes_no_locale.yaml`
+- `tests/TestApplication/config/config.yaml`
+- `tests/TestApplication/config/routes.yaml`
 
-### 10. Fix Issues (if validation fails)
-- Check file paths in config imports
-- Verify all moved files are in correct locations
-- Clear cache: `rm -rf var/cache/*`
+### 8. Check if AbstractResourceBundle is Used (Troubleshooting)
+```
+Glob: "src/*Plugin.php"
+Read {plugin_file}
+```
+Check if class extends `AbstractResourceBundle`.
 
-### 11. Commit Changes
+If YES, check for Doctrine mapping error:
 ```
-Bash: git add .
-Bash: git commit -m "Restructure configuration to Sylius 2.0 format"
+Bash: vendor/bin/console cache:clear 2>&1 | grep "invalid directory path"
 ```
+
+If error found, add getConfigFilesPath() method:
+```
+Edit {plugin_file}:
+Add method after getPath():
+
+    protected function getConfigFilesPath(): string
+    {
+        return sprintf(
+            '%s/config/doctrine/%s',
+            $this->getPath(),
+            strtolower($this->getDoctrineMappingDirectory()),
+        );
+    }
+```
+
+### 9. Clear Cache and Validate
+```
+Bash: vendor/bin/console cache:clear 2>&1 | tail -10
+```
+Expected: Cache clears successfully (may show warnings - OK)
+
+If Doctrine mapping error appears, go back to step 8 and add getConfigFilesPath().
+
+### 10. Clean Up Empty Directories
+```
+Bash: rmdir src/Resources/config src/Resources/translations src/Resources/views 2>/dev/null || true
+```
+This removes empty directories. The `public/` folder should remain (will be moved in Asset Migration step).
+
+## Success Criteria
+- Files moved from `src/Resources/` to root directories
+- Plugin class has `getPath()` method
+- Extension class uses correct FileLocator path
+- All `@Plugin/Resources/config/` paths updated to `@Plugin/config/`
+- Cache clears without fatal errors
+- If using `AbstractResourceBundle` and entities in `src/Model/`: `getConfigFilesPath()` added
+
+## Notes for AI
+- This step is OPTIONAL - check for `src/Resources/` first
+- Use `git mv` if available to preserve git history
+- Do NOT rename template folders/files in this step (done later)
+- `src/Resources/public/` should NOT be moved (will be moved in Asset Migration step)
+- Only add `getConfigFilesPath()` if plugin extends `AbstractResourceBundle` AND there's a Doctrine error
+- Cache clear may timeout or show warnings - this is acceptable
