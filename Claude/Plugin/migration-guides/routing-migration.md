@@ -1,46 +1,129 @@
 # Routing Migration
 
 ## Workflow Pattern
-Each step follows: **Execute → Validate → Fix → Commit**
+Each step follows: **Execute → Validate → Fix**
+
+## When to Execute
+This step is OPTIONAL. Execute only if you use Sylius resource routing (`type: sylius.resource`).
 
 ## Commands
 
-### 1. Update Admin Route Templates
+### 1. Find Routing Files
 ```
-Read config/routing/admin.yaml
-Edit config/routing/admin.yaml:
-Replace all occurrences:
-- templates: "@SyliusAdmin\\Crud" → templates: "@SyliusAdmin\\shared\\crud"
+Glob: "config/routes/*.yaml"
 ```
 
-### 2. Update Shop Route Templates  
+For each routing file found, read and check if it uses `type: sylius.resource`.
+
+### 2. Update Admin Routes to shared/crud Templates
+
 ```
-Read config/routing/shop.yaml
-Edit config/routing/shop.yaml:
-Replace all occurrences:
-- templates: "@SyliusShop\\..." → templates: "@SyliusShop\\shared\\..."
+Read {routing_file}
 ```
 
-### 3. Update Route Resource References (if config was moved)
-```
-Edit config/routing.yaml:
-- "@PluginName/Resources/config/routing/..." → "@PluginName/config/routing/..."
-```
-Replace any references from Resources/config to config
+Look for routes with:
+- `templates: "@SyliusAdmin\\Crud"`
+- `templates: "@SyliusAdmin\\crud"`
 
-### 4. Validate
 ```
-Bash: vendor/bin/console debug:router
-```
-Expected: Routes loaded without errors
+Edit {routing_file}:
+Replace:
+- templates: "@SyliusAdmin\\Crud"
++ templates: "@SyliusAdmin\\shared\\crud"
 
-### 5. Fix Issues (if validation fails)
-- Check route syntax
-- Verify template paths exist
-- Clear routing cache: `vendor/bin/console cache:clear`
+OR
 
-### 6. Commit Changes
+- templates: "@SyliusAdmin\\crud"
++ templates: "@SyliusAdmin\\shared\\crud"
 ```
-Bash: git add .
-Bash: git commit -m "Update routing configuration for Sylius 2.0"
+
+### 3. Add except: [show] if Not Needed
+
+If the route doesn't need a show action, add `except: [show]` after the `section:` line:
+
 ```
+Edit {routing_file}:
+Add after "section: admin":
+        except: [show]
+```
+
+### 4. Remove Deprecated vars Configuration
+
+Remove these deprecated vars that are no longer used in Sylius 2.0:
+
+```
+Edit {routing_file}:
+Remove if present:
+- vars.all.subheader (no longer used)
+- vars.{action}.subheader (e.g., vars.index.subheader, vars.create.subheader - no longer used)
+- vars.all.icon (no longer used)
+- vars.{action}.icon (e.g., vars.index.icon, vars.create.icon - no longer used)
+- vars.all.templates.form (replaced by Twig Hooks)
+```
+
+### 5. Add hook_prefix for Twig Hooks
+
+Add `hook_prefix` to `vars.all` for Twig Hooks integration:
+
+```
+Edit {routing_file}:
+Add to vars.all:
+                hook_prefix: '{plugin_prefix}.admin.{resource_name}'
+```
+
+Example:
+```yaml
+vars:
+    all:
+        hook_prefix: 'setono_sylius_terms.admin.terms'
+```
+
+The hook_prefix should follow pattern: `{vendor_plugin}.{section}.{resource}`
+
+### 6. Update Shop Routes to shared Templates
+
+If you have Shop routes:
+
+```
+Read {routing_file}
+```
+
+Look for routes with `templates: "@SyliusShop\\{name}"`:
+
+```
+Edit {routing_file}:
+Replace:
+- templates: "@SyliusShop\\product"
++ templates: "@SyliusShop\\shared\\product"
+
+- templates: "@SyliusShop\\{any_name}"
++ templates: "@SyliusShop\\shared\\{any_name}"
+```
+
+### 7. Validate Routes
+
+```
+Bash: vendor/bin/console debug:router 2>&1
+```
+
+Expected: Routes listed without errors. Check that:
+- Your plugin routes appear in the list
+- No errors about missing templates
+- Routes match expectations (especially if you used `except`)
+
+## Success Criteria
+- All `@SyliusAdmin\\Crud` changed to `@SyliusAdmin\\shared\\crud`
+- All `@SyliusShop\\{name}` changed to `@SyliusShop\\shared\\{name}`
+- Added `except: [show]` where appropriate
+- Removed deprecated vars: subheader, icon, templates.form
+- Added `hook_prefix` to vars.all
+- `debug:router` shows routes without errors
+
+## Notes for AI
+- This step is OPTIONAL - skip if no `type: sylius.resource` routes found
+- Multiple routing files may exist in config/routes/ directory
+- The `except: [show]` is optional but commonly used
+- hook_prefix format: `{vendor_plugin}.{section}.{resource}` (use snake_case)
+- Form templates will be migrated to Twig Hooks in Template Migration step
+- Icon configuration moved to menu configuration (handled in Admin Menu step)
+- Subheader configuration is completely deprecated
