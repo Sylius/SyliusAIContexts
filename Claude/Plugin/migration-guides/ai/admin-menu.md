@@ -69,12 +69,12 @@ In the addChild() call, add extras array:
 
 Example:
 ```php
-$item->addChild('terms', [
-    'route' => 'setono_sylius_terms_admin_terms_index',
+$item->addChild('resource', [
+    'route' => 'your_plugin_admin_resource_index',
     'extras' => [
         'routes' => [
-            ['route' => 'setono_sylius_terms_admin_terms_create'],
-            ['route' => 'setono_sylius_terms_admin_terms_update'],
+            ['route' => 'your_plugin_admin_resource_create'],
+            ['route' => 'your_plugin_admin_resource_update'],
         ],
     ],
 ]);

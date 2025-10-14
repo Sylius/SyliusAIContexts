@@ -111,6 +111,56 @@ Common files to check:
 - `tests/TestApplication/config/config.yaml`
 - `tests/TestApplication/config/routes.yaml`
 
+**Update .env and .env.test in test application:**
+
+Update both `.env` and `.env.test` files:
+
+```bash
+Tool: Read
+File: .env
+```
+
+Check if contains `SYLIUS_TEST_APP_CONFIGS_TO_IMPORT` with relative paths.
+
+**If found, update .env:**
+
+```bash
+Tool: Edit
+File: .env
+Old: SYLIUS_TEST_APP_CONFIGS_TO_IMPORT="../../../../tests/TestApplication/config/config.yaml"
+New: SYLIUS_TEST_APP_CONFIGS_TO_IMPORT="@{PluginName}/tests/TestApplication/config/config.yaml"
+```
+
+```bash
+Tool: Edit
+File: .env
+Old: SYLIUS_TEST_APP_ROUTES_TO_IMPORT="../../../../tests/TestApplication/config/routes.yaml"
+New: SYLIUS_TEST_APP_ROUTES_TO_IMPORT="@{PluginName}/tests/TestApplication/config/routes.yaml"
+```
+
+**Also update .env.test:**
+
+```bash
+Tool: Read
+File: .env.test
+```
+
+```bash
+Tool: Edit
+File: .env.test
+Old: SYLIUS_TEST_APP_CONFIGS_TO_IMPORT="../../../../tests/TestApplication/config/config.yaml"
+New: SYLIUS_TEST_APP_CONFIGS_TO_IMPORT="@{PluginName}/tests/TestApplication/config/config.yaml"
+```
+
+```bash
+Tool: Edit
+File: .env.test
+Old: SYLIUS_TEST_APP_ROUTES_TO_IMPORT="../../../../tests/TestApplication/config/routes.yaml"
+New: SYLIUS_TEST_APP_ROUTES_TO_IMPORT="@{PluginName}/tests/TestApplication/config/routes.yaml"
+```
+
+Replace `{PluginName}` with actual bundle name (e.g., `AcmeMyAwesomePlugin`).
+
 ### 8. Check if AbstractResourceBundle is Used (Troubleshooting)
 ```
 Glob: "src/*Plugin.php"

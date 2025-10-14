@@ -75,7 +75,7 @@ Example:
 ```yaml
 vars:
     all:
-        hook_prefix: 'setono_sylius_terms.admin.terms'
+        hook_prefix: 'your_plugin.admin.resource'
 ```
 
 The hook_prefix should follow pattern: `{vendor_plugin}.{section}.{resource}`
