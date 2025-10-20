@@ -16,7 +16,6 @@ This step prepares your development environment and runs the test application to
 ## 1. Check Database Configuration
 
 **Note:** The `.env` file may be located in:
-- Root directory: `.env`
 - Test application: `tests/TestApplication/.env`
 
 Check which structure your plugin uses.
