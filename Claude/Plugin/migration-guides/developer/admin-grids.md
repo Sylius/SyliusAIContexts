@@ -70,7 +70,35 @@ template: "@SyliusAdmin/shared/grid/field/image.html.twig"
 
 **Note:** Custom plugin templates like `@YourPlugin/admin/grid/field/custom.html.twig` don't need changes.
 
-## 2. Update Deprecated `entities` Filter
+## 2. Restore Custom Grid Templates
+
+If your grid configuration references custom templates, restore them from backup with proper `snake_case` naming.
+
+**Important:** Directory names must use `snake_case` in Sylius 2.0:
+- `Admin/Grid/Field` → `admin/grid/field`
+- `Admin/Resource/Grid` → `admin/resource/grid`
+
+**Steps:**
+
+1. Check your grid configuration for custom template references in `config/grids/*.yaml` or `src/DependencyInjection/*Extension.php`
+
+2. Find templates in `old_templates/` and restore them with `snake_case` paths:
+   ```bash
+   # Example: if old template was in CamelCase
+   # Old: old_templates/Admin/Grid/Field/channels.html.twig
+   # New: templates/admin/grid/field/channels.html.twig
+
+   mkdir -p templates/admin/grid/field
+   cp old_templates/Admin/Grid/Field/channels.html.twig templates/admin/grid/field/channels.html.twig
+   ```
+
+3. Update grid configuration to use `snake_case` paths:
+   ```diff
+   - template: '@YourPlugin/Admin/Grid/Field/channels.html.twig'
+   + template: '@YourPlugin/admin/grid/field/channels.html.twig'
+   ```
+
+## 3. Update Deprecated `entities` Filter
 
 The experimental `entities` filter has been removed. Replace it with `entity`:
 

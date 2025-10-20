@@ -45,7 +45,7 @@ Follow these steps in order to migrate your plugin to Sylius 2.0.
 
 ### Phase 6: Finalization
 
-10. **Cleanup** _(coming soon)_ - Remove commented code, deprecated code, format files
+10. **[Cleanup](cleanup.md)** - Review and remove TODO markers, commented code
 11. **Fix Tests** _(coming soon)_ - Update and fix unit and integration tests
 12. **Manual Testing** _(coming soon)_ - Manual browser testing checklist
 13. **Final Validation** _(coming soon)_ - CI checks, documentation, changelog

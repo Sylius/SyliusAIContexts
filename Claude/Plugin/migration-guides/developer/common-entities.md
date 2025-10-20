@@ -1,4 +1,4 @@
-# Common: Entity Migration (Optional)
+# Common: Entity Migration
 
 Sylius 2.0 (and Symfony 7+) fully embraces PHP 8 attributes for Doctrine ORM mapping. If your plugin still uses Doctrine annotations (e.g., `@ORM\Entity`, `@ORM\Column`), you should migrate them to attributes.
 

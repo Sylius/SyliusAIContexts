@@ -15,14 +15,21 @@ This step prepares your development environment and runs the test application to
 
 ## 1. Check Database Configuration
 
+**Note:** The `.env` file may be located in:
+- Test application: `tests/TestApplication/.env`
+
+Check which structure your plugin uses.
+
 Verify your `.env` file has correct database URL:
 
 ```bash
 # Check if DATABASE_URL is set correctly
 grep DATABASE_URL .env
+# Or if using test application structure:
+grep DATABASE_URL tests/TestApplication/.env
 ```
 
-If not exists or incorrect, create/update `.env` file:
+If not exists or incorrect, create/update the appropriate `.env` file:
 
 ```env
 DATABASE_URL="mysql://root:root@127.0.0.1:3306/sylius_test?serverVersion=8.0"

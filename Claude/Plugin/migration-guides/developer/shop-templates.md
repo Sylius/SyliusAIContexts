@@ -38,6 +38,33 @@ Shop templates are simpler than admin forms:
 
 Use this when creating new pages in your plugin (like resource detail page, custom listings, etc.).
 
+### Hook Naming Convention
+
+**Critical principle:** Each template file runs ONE hook, and that hook is named after the file.
+
+**Pattern:**
+- `show.html.twig` runs hook `plugin.shop.{page}.show`
+- `content.html.twig` runs hook `content` (relative) or `plugin.shop.{page}.{action}.content` (absolute)
+- Hook name = file location pattern
+
+**Relative vs Absolute Hook Names:**
+- **Relative**: `{% hook 'content' %}` - automatically resolves based on parent hook context
+- **Absolute**: `{% hook 'plugin.shop.terms.show.content' %}` - explicit full path
+- **Recommended**: Use relative names for cleaner, more maintainable code
+
+**Example hierarchy:**
+```
+show.html.twig
+  → runs hook: 'plugin.shop.terms.show' (absolute)
+  → renders hookable: 'content' (loads content.html.twig)
+
+content.html.twig
+  → runs hook: 'content' (relative, resolves to 'plugin.shop.terms.show.content')
+  → renders hookables: 'breadcrumbs', 'header', 'main' (loads individual templates)
+```
+
+**YAML configuration defines hookables (child templates), not the hooks called in templates.**
+
 ### 1. Create main page template
 
 `templates/shop/resource/show.html.twig`:
@@ -90,10 +117,14 @@ sylius_twig_hooks:
 `templates/shop/resource/show/content.html.twig`:
 ```twig
 <div class="container my-5">
-    {% hook 'header' %}
-    {% hook 'main' %}
+    {% hook 'content' %}
 </div>
 ```
+
+**Note on hook names:**
+- Use **relative hook names**: `{% hook 'content' %}` automatically resolves to `plugin.shop.resource.show.content` in this context
+- Alternatively use **absolute names**: `{% hook 'plugin.shop.resource.show.content' %}`
+- The hookables (`header`, `main`, etc.) are defined in YAML and rendered automatically by this hook
 
 `templates/shop/resource/show/content/header.html.twig`:
 ```twig
@@ -125,6 +156,19 @@ sylius_twig_hooks:
 - Access variables via `hookable_metadata.context.{variable}`
 - Use Bootstrap 5 classes: `container`, `row`, `col-*`, `card`
 - Each section in separate template = customizable
+
+`templates/shop/resource/show/content/breadcrumbs.html.twig` (optional but recommended):
+```twig
+{% set resource = hookable_metadata.context.resource %}
+{% from '@SyliusShop/shared/breadcrumbs.html.twig' import breadcrumbs as breadcrumbs %}
+
+{{ breadcrumbs([
+    { label: 'sylius.ui.home'|trans, path: path('sylius_shop_homepage')},
+    { label: resource.name, active: true }
+]) }}
+```
+
+**Important:** Use Sylius breadcrumbs macro (`@SyliusShop/shared/breadcrumbs.html.twig`) instead of writing HTML manually. This ensures consistent styling with Sylius shop and makes breadcrumbs automatically responsive.
 
 ### 4. Import Twig Hooks config
 

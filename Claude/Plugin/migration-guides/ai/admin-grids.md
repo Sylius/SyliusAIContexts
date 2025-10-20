@@ -78,7 +78,68 @@ Output: files_with_matches
 
 Apply same replacements to PHP files.
 
-### 3. Replace Deprecated `entities` Filter
+### 3. Restore Custom Grid Templates
+
+If the plugin has custom grid field/action/filter templates, restore them from backup.
+
+**Important:** Sylius 2.0 requires `snake_case` directory names. Convert `CamelCase` to `snake_case`:
+- `Admin/Grid/Field` → `admin/grid/field`
+- `Admin/Resource/Grid` → `admin/resource/grid`
+
+**Find custom templates:**
+
+```bash
+Tool: Bash
+Command: find old_templates -path "*/grid/field/*.twig" -o -path "*/grid/action/*.twig" -o -path "*/grid/filter/*.twig"
+```
+
+For each template found:
+
+**Read old template:**
+
+```bash
+Tool: Read
+File: old_templates/{path_to_template}
+```
+
+**Create directory structure (use snake_case):**
+
+```bash
+Tool: Bash
+Command: mkdir -p templates/{snake_case_path}
+```
+
+Example: If old path was `old_templates/Admin/Grid/Field`, create `templates/admin/grid/field`
+
+**Write to new location:**
+
+```bash
+Tool: Write
+File: templates/{snake_case_path}/{filename}.html.twig
+Content: {content from old file}
+```
+
+**Update grid configuration if needed:**
+
+If grid config used `CamelCase` paths, search and update:
+
+```bash
+Tool: Grep
+Pattern: "@.*Plugin/.*[A-Z].*\.twig"
+Path: {grid_config_file}
+Output: content
+```
+
+For each CamelCase path found:
+
+```bash
+Tool: Edit
+File: {grid_config_file}
+Old: template: '@PluginName/Admin/Grid/Field/{filename}.html.twig'
+New: template: '@PluginName/admin/grid/field/{filename}.html.twig'
+```
+
+### 4. Replace Deprecated `entities` Filter
 
 Search for deprecated `entities` filter:
 
@@ -122,7 +183,7 @@ New: (same block but with "type: entity" and "fields:")
 - Option: `field: "value"` → `fields: [value]` (string to array)
 - Keep all other options unchanged
 
-### 4. Update Icons to Tabler Format
+### 5. Update Icons to Tabler Format
 
 Search for icon definitions:
 
@@ -191,7 +252,7 @@ New: ->setOptions(['icon' => 'tabler:plus'])
 
 Apply same mapping as for YAML files.
 
-### 5. Validate
+### 6. Validate
 
 ```bash
 Tool: Bash
@@ -209,12 +270,21 @@ Command: vendor/bin/console debug:config sylius_grid
 
 Expected: Your grids appear in the configuration.
 
+### 7. Test in Browser (if MCP browser available)
+
+If MCP browser tools are available (mcp__playwright or mcp__chrome-devtools):
+- Navigate to admin grid pages for the resource
+- Take screenshots to verify grids render correctly
+- Check that all columns display, icons show properly, and actions work
+
 ## Success Criteria
 - All Sylius template paths updated to `@SyliusAdmin/shared/grid/...`
+- All custom grid templates restored from `old_templates/` to `templates/`
 - All `entities` filters replaced with `entity` (and `field:` → `fields:`)
 - All icons updated to Tabler format (`tabler:icon-name`)
 - Cache clears successfully
 - Grid configuration loads without errors
+- Grid pages display correctly in browser (test via MCP)
 
 ## Common Issues
 

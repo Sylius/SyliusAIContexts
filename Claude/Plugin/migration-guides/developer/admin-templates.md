@@ -290,6 +290,13 @@ template: '@Plugin/admin/resource/form.html.twig'
 
 If you need custom actions (e.g., auto-generate slug from name), follow these additional steps:
 
+**Before You Start:** Check if you have existing JavaScript assets that already implement this logic. If you do, consider whether the JavaScript should be:
+1. Rewritten as Live Component actions (this section)
+2. Migrated to Stimulus Controller (see Assets Migration)
+3. Left as-is and migrated to assets/admin/
+
+See the [Assets Migration guide](admin-assets.md) for analyzing existing JavaScript before adding custom Live Component actions.
+
 ### 1. Create custom PHP Component
 
 `src/Twig/Component/Resource/FormComponent.php`:

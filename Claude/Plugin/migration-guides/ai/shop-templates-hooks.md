@@ -2,6 +2,33 @@
 
 This guide provides Tool commands to create custom Twig Hooks for shop pages.
 
+## Hook Naming Convention - READ THIS FIRST
+
+**Critical principle:** Each template file runs ONE hook, and that hook is named after the file.
+
+**Pattern:**
+- `show.html.twig` runs hook `plugin.shop.{page}.show`
+- `content.html.twig` runs hook `content` (relative) or `plugin.shop.{page}.{action}.content` (absolute)
+- Hook name = file location pattern
+
+**Relative vs Absolute Hook Names:**
+- **Relative**: `{% hook 'content' %}` - automatically resolves based on parent hook context
+- **Absolute**: `{% hook 'plugin.shop.terms.show.content' %}` - explicit full path
+- **Recommended**: Use relative names for cleaner, more maintainable code
+
+**Example hierarchy:**
+```
+show.html.twig
+  → runs hook: 'plugin.shop.terms.show' (absolute)
+  → renders hookable: 'content' (loads content.html.twig)
+
+content.html.twig
+  → runs hook: 'content' (relative, resolves to 'plugin.shop.terms.show.content')
+  → renders hookables: 'breadcrumbs', 'header', 'main' (loads individual templates)
+```
+
+**YAML configuration defines hookables (child templates), not the hooks called in templates.**
+
 ## Prerequisites
 
 Shop pages exist in `templates/shop/`
@@ -120,10 +147,16 @@ File: templates/shop/{page}/{action}/content.html.twig
 Content:
 ```twig
 <div class="container my-5">
-    {% hook 'header' %}
-    {% hook 'main' %}
+    {% hook 'content' %}
 </div>
 ```
+
+**IMPORTANT Hook Naming Convention:**
+- Each template file runs ONE hook
+- Use **relative hook names** in templates: `{% hook 'content' %}` automatically resolves to `plugin.shop.{page}.{action}.content` when inside the parent hook context
+- Alternatively use **absolute hook names**: `{% hook 'plugin.shop.{page}.{action}.content' %}`
+- The hookables (`header`, `main`, etc.) are defined in YAML and rendered automatically by the hook
+- Pattern: The hook name in the template matches the hookable name or the full hook path
 
 **Bootstrap 5 classes:**
 - `container` - centered content with responsive width
@@ -176,6 +209,26 @@ Content pattern:
 - Access variables via `hookable_metadata.context.{variable_name}`
 - Use Bootstrap 5 classes
 - Each section = separate template = customizable
+
+### Breadcrumbs template (optional but recommended)
+
+```bash
+Tool: Write
+File: templates/shop/{page}/{action}/content/breadcrumbs.html.twig
+```
+
+Content pattern using Sylius breadcrumbs macro:
+```twig
+{% set resource = hookable_metadata.context.{resource_name} %}
+{% from '@SyliusShop/shared/breadcrumbs.html.twig' import breadcrumbs as breadcrumbs %}
+
+{{ breadcrumbs([
+    { label: 'sylius.ui.home'|trans, path: path('sylius_shop_homepage')},
+    { label: resource.name, active: true }
+]) }}
+```
+
+**Important:** Use Sylius breadcrumbs macro instead of writing HTML manually. This ensures consistent styling with Sylius shop.
 
 ## Step 10: Migrate existing content to Bootstrap 5
 
@@ -288,3 +341,14 @@ Check:
 1. Using correct Bootstrap 5 classes?
 2. Not mixing with old Semantic UI classes?
 3. Layout extends `@SyliusShop/shared/layout/base.html.twig`?
+
+---
+
+## Testing (Optional)
+If MCP tools (playwright/chrome-devtools) are available, you can test the shop template changes:
+- Navigate to shop pages (product listings, detail pages, custom pages)
+- Verify all content renders correctly
+- Check Bootstrap 5 styling is applied
+- Test responsive layout on different screen sizes
+- Verify breadcrumbs and navigation work
+- Report any layout or rendering issues

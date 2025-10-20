@@ -2,10 +2,14 @@
 
 This guide replaces Basic Live Component with Custom Live Component for custom actions.
 
+**This is Step 7.6 - Execute AFTER Step 7.5 (Assets)**
+
 ## Prerequisites
 
 - Twig Hooks already created
 - Basic Live Component already configured (execute `admin-templates-live-basic.md` first)
+- Assets migration completed (Step 7.5)
+- JavaScript files analyzed
 
 ## When to Use This
 
@@ -14,7 +18,22 @@ Only use custom component when you need:
 - Field dependencies
 - Custom form behavior beyond basic validation
 
-## Step 1: Extract resource information
+**IMPORTANT:** Before adding custom actions, check if JavaScript assets from Step 7.5 already implement this logic. This step allows you to replace JavaScript with Live Component actions.
+
+## Step 1: Review JavaScript from Assets Migration
+
+If Step 7.5 (Assets) found JavaScript files that could be replaced with Live Components, analyze them here.
+
+```bash
+Tool: Grep
+Pattern: \.js$
+Path: src/Resources/public/
+Output: files_with_matches
+```
+
+For each JS file found, read and determine if it should become a Live Component action.
+
+## Step 2: Extract resource information
 
 ```bash
 Tool: Read
@@ -35,7 +54,9 @@ Extract:
 - Repository service ID
 - Model class parameter
 
-## Step 2: Detect what custom logic is needed
+## Step 3: Detect what custom logic is needed
+
+Based on JavaScript analysis from Step 1 and Form Type analysis:
 
 ```bash
 Tool: Read
@@ -43,18 +64,18 @@ File: src/Form/Type/{Resource}Type.php
 ```
 
 Identify which fields might need custom actions:
-- Slug field → likely needs generation from name
+- Slug field → likely needs generation from name (check if JS was doing this)
 - Preview field → might need render action
 - Dependent fields → might need update actions
 
-## Step 3: Create FormComponent directory
+## Step 4: Create FormComponent directory
 
 ```bash
 Tool: Bash
 Command: mkdir -p src/Twig/Component/{Resource}
 ```
 
-## Step 4: Create custom FormComponent class
+## Step 5: Create custom FormComponent class
 
 ```bash
 Tool: Write
@@ -133,7 +154,7 @@ public function updateDependentField(): void
 }
 ```
 
-## Step 5: Update service definition
+## Step 6: Update service definition
 
 ```bash
 Tool: Edit
@@ -168,7 +189,7 @@ New: <service
 - Add additional `<argument>` tags for any extra dependencies your custom component needs
 - Keep the same service ID and tag
 
-## Step 6: Validate PHP syntax
+## Step 7: Validate PHP syntax
 
 ```bash
 Tool: Bash
@@ -177,7 +198,7 @@ Command: php -l src/Twig/Component/{Resource}/FormComponent.php
 
 Expected output: `No syntax errors detected`
 
-## Step 7: Clear cache and validate
+## Step 8: Clear cache and validate
 
 ```bash
 Tool: Bash

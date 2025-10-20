@@ -127,3 +127,10 @@ Expected: Routes listed without errors. Check that:
 - Form templates will be migrated to Twig Hooks in Template Migration step
 - Icon configuration moved to menu configuration (handled in Admin Menu step)
 - Subheader configuration is completely deprecated
+
+## Testing (Optional)
+If MCP tools (playwright/chrome-devtools) are available, you can test the routing changes:
+- Navigate to admin panel
+- Click on menu items to verify routes work
+- Check that index/create/update pages load correctly
+- Report any 404 or template errors

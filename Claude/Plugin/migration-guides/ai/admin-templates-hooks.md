@@ -419,3 +419,12 @@ ReplaceAll: true
 - End application cannot customize individual fields
 - No flexibility for end users
 - Hard to maintain for complex forms
+
+---
+
+## Step 15: Test in Browser (if MCP browser available)
+
+If MCP browser tools are available (mcp__playwright or mcp__chrome-devtools):
+- Navigate to admin create/update forms for the resource
+- Take screenshots to verify forms render correctly
+- Check that all fields display, Bootstrap 5 styling is applied, and translations work

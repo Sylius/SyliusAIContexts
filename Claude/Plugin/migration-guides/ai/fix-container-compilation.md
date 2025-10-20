@@ -154,7 +154,7 @@ File: src/DependencyInjection/{PluginName}Extension.php
 Tool: Edit
 File: src/DependencyInjection/{PluginName}Extension.php
 Old: $container->prependExtensionConfig('sylius_ui', [
-New: // TODO: Migrate to Twig Hooks in Step 7.4 (Templates)
+New: // TODO: Migrate to Twig Hooks in Step (Templates)
 /*
 $container->prependExtensionConfig('sylius_ui', [
 ```
@@ -183,7 +183,7 @@ If found, comment out:
 Tool: Edit
 File: config/packages/sylius_ui.yaml
 Old: sylius_ui:
-New: # TODO: Migrate to Twig Hooks in Step 7.4 (Templates)
+New: # TODO: Migrate to Twig Hooks in Step (Templates)
 # sylius_ui:
 ```
 
@@ -232,7 +232,7 @@ Tool: Edit
 File: {file_from_grep}
 Old: <?php
 New: <?php
-// TODO: Migrate to Twig Hooks in Step 7.4 (Templates)
+// TODO: Migrate to Twig Hooks in Step (Templates)
 /*
 ```
 

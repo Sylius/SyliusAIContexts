@@ -11,9 +11,15 @@ This guide provides Tool commands to prepare development environment and run tes
 
 ## Step 1: Check database configuration
 
+**Note:** The `.env` file may be located in:
+- Root directory: `.env`
+- Test application: `tests/TestApplication/.env`
+
+Check which structure the plugin uses first.
+
 ```bash
 Tool: Bash
-Command: grep DATABASE_URL .env
+Command: grep DATABASE_URL .env 2>/dev/null || grep DATABASE_URL tests/TestApplication/.env 2>/dev/null || echo "Not found"
 ```
 
 **If not found or needs update:**
@@ -22,12 +28,17 @@ Command: grep DATABASE_URL .env
 Tool: Read
 File: .env
 ```
+or
+```bash
+Tool: Read
+File: tests/TestApplication/.env
+```
 
 Check if DATABASE_URL exists. If not:
 
 ```bash
 Tool: Edit
-File: .env
+File: .env  (or tests/TestApplication/.env)
 Old: (end of file)
 New:
 DATABASE_URL="mysql://root:root@127.0.0.1:3306/sylius_test?serverVersion=8.0"
@@ -37,7 +48,7 @@ Or if exists but incorrect, update it.
 
 ---
 
-## Step 2: (Optional) Backup templates
+## Step 2: Backup templates
 
 **Only if user wants to track template migration progress:**
 

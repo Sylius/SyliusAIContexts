@@ -29,8 +29,8 @@ Follow these steps in order to automate plugin migration to Sylius 2.0.
      - **[Overview](admin-templates-overview.md)** - Decision guide
      - **[Twig Hooks](admin-templates-hooks.md)** - Create hooks structure
      - **[Live Component (Basic)](admin-templates-live-basic.md)** - Add live validation
-     - **[Live Component (Custom)](admin-templates-live-custom.md)** - Add custom actions
    - 7.5 **[Assets](admin-assets.md)** - Update admin JavaScript and CSS
+   - 7.6 **[Live Component (Custom)](admin-templates-live-custom.md)** - Add custom actions (after analyzing assets)
 
 ### Phase 4: Shop Migration
 
@@ -52,7 +52,7 @@ Follow these steps in order to automate plugin migration to Sylius 2.0.
 
 ### Phase 6: Finalization
 
-10. **Cleanup** _(coming soon)_ - Remove commented code, deprecated code, format files
+10. **[Cleanup](cleanup.md)** - Review and remove TODO markers, commented code
 11. **Fix Tests** _(coming soon)_ - Update and fix unit and integration tests
 12. **Manual Testing** _(coming soon)_ - Manual browser testing checklist
 13. **Final Validation** _(coming soon)_ - CI checks, documentation, changelog
