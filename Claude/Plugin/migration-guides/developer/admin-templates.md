@@ -7,8 +7,10 @@ This step converts templates from Semantic UI to Bootstrap 5 and integrates them
 - Templates are already using Bootstrap 5 and Twig Hooks
 
 **When to do this step:**
-- You have admin forms using Semantic UI
+- You have admin forms (all resources need Twig Hooks in Sylius 2.0)
 - You want to make templates customizable in end application
+
+**Important:** Execute this migration for ALL resources with admin forms, not just resources with custom templates. In Sylius 2.0, all admin forms require Twig Hooks configuration.
 
 ---
 
@@ -137,7 +139,7 @@ sylius_twig_hooks:
 
         'plugin.admin.resource.create.content.form.sections.general':
             default:
-                enabled: false  # ← IMPORTANT! Disable Sylius default rendering
+                enabled: false
             code:
                 template: '@Plugin/admin/resource/form/sections/general/code.html.twig'
                 priority: 300
@@ -434,7 +436,7 @@ sylius_twig_hooks:
     hooks:
         'plugin.admin.resource.create.content.form.sections':
             general:
-                enabled: false  # ← Disable Sylius default "general" section
+                enabled: false
             all_fields:
                 template: '@Plugin/admin/resource/form/sections/all_fields.html.twig'
                 priority: 0

@@ -16,6 +16,7 @@ This step prepares your development environment and runs the test application to
 ## 1. Check Database Configuration
 
 **Note:** The `.env` file may be located in:
+- Root directory: `.env`
 - Test application: `tests/TestApplication/.env`
 
 Check which structure your plugin uses.
@@ -156,6 +157,25 @@ yarn --cwd vendor/sylius/test-application encore production
 ```bash
 vendor/bin/console assets:install
 ```
+
+### Troubleshooting: Asset Build Errors
+
+If `encore dev` fails with compilation errors (e.g., missing dependencies, import errors):
+
+**Solution:** Comment out the problematic code with a TODO marker:
+
+1. Identify the file causing the error from the webpack output
+2. Open the file and comment out the broken import/code
+3. Add a TODO comment: `// TODO: Fix in Assets migration step - [describe issue]`
+4. Rebuild assets: `yarn --cwd vendor/sylius/test-application encore dev`
+
+**Example:**
+```javascript
+// TODO: Fix in Assets migration step - add slick-carousel dependency
+// import 'slick-carousel';
+```
+
+**Goal:** Ensure assets compile successfully. Missing dependencies will be properly added during the Assets migration step (7.5).
 
 ---
 

@@ -1,4 +1,4 @@
-# Entity Migration (Optional)
+# Entity Migration
 
 ## Workflow Pattern
 Each step follows: **Execute → Validate → Fix**

@@ -38,7 +38,6 @@ plugin_admin_resource:
     resource: |
         alias: plugin.resource
         section: admin
-        except: [show]
         templates: "@SyliusAdmin\shared\crud"
         redirect: update
         grid: plugin_resource
@@ -50,11 +49,12 @@ plugin_admin_resource:
 
 **Key changes:**
 - `templates: "@SyliusAdmin\Crud"` → `templates: "@SyliusAdmin\shared\crud"`
-- Add `except: [show]` if you don't need the show action
 - Remove `vars.all.subheader` and `vars.{action}.subheader` - no longer used
 - Remove `vars.all.templates.form` - replaced by Twig Hooks
 - Remove `vars.all.icon` and `vars.{action}.icon` (e.g., `vars.index.icon`) - no longer used
 - Add `vars.all.hook_prefix` - for Twig Hooks integration
+
+**Note:** Do not modify action configuration (`only`, `except`) - preserve the original configuration as it reflects the plugin's needs.
 
 ## 2. Validate Routes
 
@@ -64,6 +64,6 @@ Check that routes load correctly:
 vendor/bin/console debug:router
 ```
 
-You should see your routes listed without errors. Verify that routes match your expectations (especially if you used `except`).
+You should see your routes listed without errors. Verify that routes match your expectations.
 
 **Note:** Form templates and other customizations will be migrated to Twig Hooks in the Templates step.

@@ -26,25 +26,46 @@ Pattern: *.php
 Path: src/Grid/
 ```
 
-### 2. Update Sylius Template Paths
+### 2. Check Template References Exist
 
-Search for old Sylius Grid template references:
+Search for ALL template references in grid configs:
 
 ```bash
 Tool: Grep
-Pattern: "@SyliusAdmin/Grid/"
+Pattern: "template:"
 Path: config/grids/
-Output: files_with_matches
+Output: content
+-n: true
 ```
 
-For each file found:
+For each template reference found, verify it exists in Sylius 2.0 and has correct path:
 
 ```bash
-Tool: Read
-File: {grid_file}
+Tool: Bash
+Command: find vendor/sylius -name "{template_filename}.twig" | grep -i "{path_part}"
 ```
 
-Update template paths:
+**Common issues to fix:**
+
+1. **Incorrect casing** - Sylius 2.0 uses lowercase paths:
+   - `@SyliusUi/Grid/Field/` → `@SyliusUi/grid/field/`
+   - `@SyliusAdmin/Grid/` → `@SyliusAdmin/grid/`
+
+2. **Old paths** - Some templates moved:
+   - `@SyliusAdmin/Grid/Field/` → `@SyliusAdmin/shared/grid/field/`
+   - `@SyliusAdmin/Grid/Action/` → `@SyliusAdmin/shared/grid/action/`
+   - `@SyliusAdmin/Grid/Filter/` → `@SyliusAdmin/shared/grid/filter/`
+
+**Example fix for casing:**
+
+```bash
+Tool: Edit
+File: {grid_file}
+Old: template: "@SyliusUi/Grid/Field/enabled.html.twig"
+New: template: "@SyliusUi/grid/field/enabled.html.twig"
+```
+
+**Example fix for moved templates:**
 
 ```bash
 Tool: Edit
@@ -53,21 +74,9 @@ Old: "@SyliusAdmin/Grid/Field/
 New: "@SyliusAdmin/shared/grid/field/
 ```
 
-```bash
-Tool: Edit
-File: {grid_file}
-Old: "@SyliusAdmin/Grid/Action/
-New: "@SyliusAdmin/shared/grid/action/
-```
+### 3. Update Sylius Template Paths in PHP
 
-```bash
-Tool: Edit
-File: {grid_file}
-Old: "@SyliusAdmin/Grid/Filter/
-New: "@SyliusAdmin/shared/grid/filter/
-```
-
-**Also check PHP Extension files:**
+**Check PHP Extension files:**
 
 ```bash
 Tool: Grep
@@ -78,7 +87,7 @@ Output: files_with_matches
 
 Apply same replacements to PHP files.
 
-### 3. Restore Custom Grid Templates
+### 4. Restore Custom Grid Templates
 
 If the plugin has custom grid field/action/filter templates, restore them from backup.
 
@@ -139,7 +148,7 @@ Old: template: '@PluginName/Admin/Grid/Field/{filename}.html.twig'
 New: template: '@PluginName/admin/grid/field/{filename}.html.twig'
 ```
 
-### 4. Replace Deprecated `entities` Filter
+### 5. Replace Deprecated `entities` Filter
 
 Search for deprecated `entities` filter:
 
@@ -183,7 +192,7 @@ New: (same block but with "type: entity" and "fields:")
 - Option: `field: "value"` → `fields: [value]` (string to array)
 - Keep all other options unchanged
 
-### 5. Update Icons to Tabler Format
+### 6. Update Icons to Tabler Format
 
 Search for icon definitions:
 
@@ -252,7 +261,7 @@ New: ->setOptions(['icon' => 'tabler:plus'])
 
 Apply same mapping as for YAML files.
 
-### 6. Validate
+### 7. Validate
 
 ```bash
 Tool: Bash
@@ -270,7 +279,7 @@ Command: vendor/bin/console debug:config sylius_grid
 
 Expected: Your grids appear in the configuration.
 
-### 7. Test in Browser (if MCP browser available)
+### 8. Test in Browser (if MCP browser available)
 
 If MCP browser tools are available (mcp__playwright or mcp__chrome-devtools):
 - Navigate to admin grid pages for the resource

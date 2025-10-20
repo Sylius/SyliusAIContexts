@@ -8,6 +8,7 @@ This step is OPTIONAL. Execute only if your plugin defines admin grids.
 
 Grid definitions remain largely the same in Sylius 2.0. Main changes:
 - Update Sylius template paths (`@SyliusAdmin/Grid/...` → `@SyliusAdmin/shared/grid/...`)
+- Verify template paths use lowercase (`Grid/Field` → `grid/field`)
 - Replace deprecated `entities` filter with `entity`
 - Update icon names (Semantic UI → Tabler)
 
@@ -70,7 +71,39 @@ template: "@SyliusAdmin/shared/grid/field/image.html.twig"
 
 **Note:** Custom plugin templates like `@YourPlugin/admin/grid/field/custom.html.twig` don't need changes.
 
-## 2. Restore Custom Grid Templates
+## 2. Verify Template References
+
+After updating paths, verify that all referenced templates actually exist in Sylius 2.0 and have correct casing.
+
+**Common issues:**
+
+### Incorrect Casing
+
+Sylius 2.0 uses lowercase paths. Fix any capital letters:
+
+```diff
+# Before (will fail)
+- template: "@SyliusUi/Grid/Field/enabled.html.twig"
+
+# After (correct)
++ template: "@SyliusUi/grid/field/enabled.html.twig"
+```
+
+**Common patterns:**
+- `@SyliusUi/Grid/Field/` → `@SyliusUi/grid/field/`
+- `@SyliusAdmin/Grid/` → `@SyliusAdmin/grid/` or `@SyliusAdmin/shared/grid/`
+
+### Template No Longer Exists
+
+Some Sylius templates may have been removed in 2.0. To check if a template exists:
+
+```bash
+find vendor/sylius -name "your_template.twig"
+```
+
+If not found, create a custom template in your plugin.
+
+## 3. Restore Custom Grid Templates
 
 If your grid configuration references custom templates, restore them from backup with proper `snake_case` naming.
 
@@ -98,7 +131,7 @@ If your grid configuration references custom templates, restore them from backup
    + template: '@YourPlugin/admin/grid/field/channels.html.twig'
    ```
 
-## 3. Update Deprecated `entities` Filter
+## 4. Update Deprecated `entities` Filter
 
 The experimental `entities` filter has been removed. Replace it with `entity`:
 
@@ -119,7 +152,7 @@ sylius_grid:
 - Filter type: `entities` → `entity`
 - Option: `field: "value"` → `fields: [value]` (string to array)
 
-## 3. Update Icons to Tabler Format
+## 5. Update Icons to Tabler Format
 
 Update icon format to use `tabler:` prefix:
 
@@ -130,7 +163,7 @@ Update icon format to use `tabler:` prefix:
 
 Find icon names at: https://ux.symfony.com/icons
 
-## 4. Validate
+## 6. Validate
 
 Clear cache and check if grids work:
 

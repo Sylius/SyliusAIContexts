@@ -48,9 +48,9 @@ Or if exists but incorrect, update it.
 
 ---
 
-## Step 2: Backup templates
+## Step 2: Backup templates (Always execute)
 
-**Only if user wants to track template migration progress:**
+Templates need to be backed up to track migration progress.
 
 ### Detect templates location
 
@@ -229,6 +229,26 @@ Tool: Bash
 Command: vendor/bin/console assets:install
 ```
 
+### Handle asset build errors (if any)
+
+If `encore dev` fails with compilation errors:
+
+**Check the error output and identify the problematic file/import.**
+
+**Solution:** Comment out the broken code with TODO:
+- Add TODO comment explaining the issue
+- Comment out the problematic import/code
+- Specify it will be fixed in Assets migration step (7.5)
+
+**Rebuild assets:**
+```bash
+Tool: Bash
+Command: yarn --cwd vendor/sylius/test-application encore dev
+Timeout: 300000
+```
+
+**Goal:** Assets must compile successfully. Missing dependencies and broken code will be properly fixed in Assets migration step.
+
 ---
 
 ## Step 6: Start development server
@@ -259,6 +279,7 @@ After executing this guide:
 
 ## Notes for AI
 
+- Step 2 (Backup templates) should ALWAYS be executed - it's non-destructive and helps track migration progress
 - Don't stop server after starting - let it run in background
 - If any step fails, report error to user
 - Assets build may take time - use appropriate timeout

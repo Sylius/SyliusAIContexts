@@ -192,7 +192,62 @@ ALL assets must be moved to assets/admin/ or assets/shop/.
 Should I move these files as well?"
 ```
 
-### 8. Validate
+### 8. Declare JavaScript Dependencies (If Needed)
+
+**IMPORTANT:** If your JavaScript imports external packages (like Swiper, Chart.js, etc.), you must declare them in `tests/TestApplication/package.json`.
+
+Check if JavaScript uses external imports:
+
+```bash
+Tool: Grep
+Pattern: ^import .* from ['"](?!\.|\@symfony)
+Path: assets/admin/
+Output: content
+-n: true
+```
+
+If external imports found (packages not starting with `.` or `@symfony`), create package.json:
+
+```bash
+Tool: Write
+File: tests/TestApplication/package.json
+Content:
+{
+    "dependencies": {
+        "package-name": "^version"
+    }
+}
+```
+
+**Examples of packages that need declaration:**
+- `swiper` - Modern carousel library
+- `chart.js` - Charting library
+- `flatpickr` - Date picker
+- `tom-select` - Select enhancement (if not already in Sylius)
+
+**How it works:**
+1. Plugin declares dependency in `tests/TestApplication/package.json`
+2. Test application merge script reads it during `yarn install`
+3. End users must install the same packages (document in UPGRADE.md or README.md)
+
+**Check if package.json already exists:**
+
+```bash
+Tool: Bash
+Command: ls -la tests/TestApplication/package.json 2>/dev/null || echo "Does not exist"
+```
+
+If exists, merge dependencies:
+
+```bash
+Tool: Edit
+File: tests/TestApplication/package.json
+Old: "dependencies": {
+New: "dependencies": {
+        "new-package": "^version",
+```
+
+### 9. Validate
 
 Rebuild assets:
 
@@ -235,6 +290,8 @@ Expected: Cache cleared successfully
 
 ## Notes for AI
 - ALWAYS check multiple possible locations for assets (src/Resources/public/, assets/, inline in templates)
+- **CRITICAL:** If JavaScript imports external packages, MUST create `tests/TestApplication/package.json` with dependencies
+- Check for external imports using Grep pattern: `^import .* from ['"](?!\.|\@symfony)`
 - Report Live Component and Stimulus opportunities but DON'T force them - user decides
 - If user wants to rewrite to Live Component/Stimulus, provide suggestions but user must implement
 - Default approach is simple migration (move to assets/admin/ + import)
@@ -243,3 +300,4 @@ Expected: Cache cleared successfully
 - Convert .css to .scss when moving (recommended)
 - Report all findings and ask for confirmation before bulk operations
 - If unsure about approach, ask user which they prefer
+- Document required packages in UPGRADE.md or README.md for end users

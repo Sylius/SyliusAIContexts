@@ -39,9 +39,13 @@ Follow these steps in order to migrate your plugin to Sylius 2.0.
 
 ### Phase 5: API Migration
 
-9. **API** _(coming soon)_
-   - 9.1 **API Platform 4.x** - Migrate to API Platform 4.x
-   - 9.2 **Serialization** - Update serialization configuration
+9. **API**
+   - 9.1 **[Restructure Configuration](api-restructure-config.md)** - Split properties and resources into separate files (API Platform 4.x)
+   - 9.2 **[Serialization Groups](api-serialization-groups.md)** - Update serialization groups with plugin prefix
+   - 9.3 **[DataProvider to StateProvider](api-dataprovider-to-stateprovider.md)** - Migrate DataProviders to StateProviders
+   - 9.4 **[DataPersister to StateProcessor](api-datapersister-to-stateprocessor.md)** - Migrate DataPersisters to StateProcessors
+   - 9.5 **[QueryExtension Signatures](api-queryextension-signature-update.md)** - Update QueryExtension method signatures
+   - 9.6 **[DataTransformer to ContextBuilder](api-datatransformer-to-contextbuilder.md)** - Migrate DataTransformers to SerializerContextBuilders
 
 ### Phase 6: Finalization
 

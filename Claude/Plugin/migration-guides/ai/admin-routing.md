@@ -37,17 +37,7 @@ OR
 + templates: "@SyliusAdmin\\shared\\crud"
 ```
 
-### 3. Add except: [show] if Not Needed
-
-If the route doesn't need a show action, add `except: [show]` after the `section:` line:
-
-```
-Edit {routing_file}:
-Add after "section: admin":
-        except: [show]
-```
-
-### 4. Remove Deprecated vars Configuration
+### 3. Remove Deprecated vars Configuration
 
 Remove these deprecated vars that are no longer used in Sylius 2.0:
 
@@ -61,7 +51,7 @@ Remove if present:
 - vars.all.templates.form (replaced by Twig Hooks)
 ```
 
-### 5. Add hook_prefix for Twig Hooks
+### 4. Add hook_prefix for Twig Hooks
 
 Add `hook_prefix` to `vars.all` for Twig Hooks integration:
 
@@ -80,7 +70,7 @@ vars:
 
 The hook_prefix should follow pattern: `{vendor_plugin}.{section}.{resource}`
 
-### 6. Update Shop Routes to shared Templates
+### 5. Update Shop Routes to shared Templates
 
 If you have Shop routes:
 
@@ -100,7 +90,7 @@ Replace:
 + templates: "@SyliusShop\\shared\\{any_name}"
 ```
 
-### 7. Validate Routes
+### 6. Validate Routes
 
 ```
 Bash: vendor/bin/console debug:router 2>&1
@@ -109,12 +99,11 @@ Bash: vendor/bin/console debug:router 2>&1
 Expected: Routes listed without errors. Check that:
 - Your plugin routes appear in the list
 - No errors about missing templates
-- Routes match expectations (especially if you used `except`)
+- Routes match expectations
 
 ## Success Criteria
 - All `@SyliusAdmin\\Crud` changed to `@SyliusAdmin\\shared\\crud`
 - All `@SyliusShop\\{name}` changed to `@SyliusShop\\shared\\{name}`
-- Added `except: [show]` where appropriate
 - Removed deprecated vars: subheader, icon, templates.form
 - Added `hook_prefix` to vars.all
 - `debug:router` shows routes without errors
@@ -122,7 +111,7 @@ Expected: Routes listed without errors. Check that:
 ## Notes for AI
 - This step is OPTIONAL - skip if no `type: sylius.resource` routes found
 - Multiple routing files may exist in config/routes/ directory
-- The `except: [show]` is optional but commonly used
+- Do NOT modify action configuration (`only`, `except`) - preserve original
 - hook_prefix format: `{vendor_plugin}.{section}.{resource}` (use snake_case)
 - Form templates will be migrated to Twig Hooks in Template Migration step
 - Icon configuration moved to menu configuration (handled in Admin Menu step)

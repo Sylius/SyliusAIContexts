@@ -217,6 +217,8 @@ Expected: Cache cleared successfully
 
 ## Notes for AI
 - ALWAYS check multiple possible locations for assets (src/Resources/public/, assets/, inline in templates)
+- **CRITICAL:** If JavaScript imports external packages, MUST create `tests/TestApplication/package.json` with dependencies
+- Check for external imports using Grep pattern: `^import .* from ['"](?!\.|\@symfony)`
 - Report Stimulus opportunities but DON'T force it - user decides
 - If user wants to rewrite to Stimulus, provide suggestions but user must implement
 - Default approach is simple migration (move to assets/shop/ + import)
@@ -225,3 +227,4 @@ Expected: Cache cleared successfully
 - Convert .css to .scss when moving (recommended)
 - Report all findings and ask for confirmation before bulk operations
 - If unsure about approach, ask user which they prefer
+- Document required packages in UPGRADE.md or README.md for end users

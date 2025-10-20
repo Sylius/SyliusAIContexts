@@ -191,6 +191,28 @@ vendor/bin/console assets:install
 
 ---
 
+## Declaring External JavaScript Dependencies
+
+**Important:** If your JavaScript imports external packages (not starting with `.` or `@symfony`), you must declare them in `tests/TestApplication/package.json`.
+
+**Example:** If using Swiper, Chart.js, Photoswipe, etc.:
+
+`tests/TestApplication/package.json`:
+```json
+{
+    "dependencies": {
+        "swiper": "^12.0.2"
+    },
+    "devDependencies": {},
+    "removeDependencies": [],
+    "removeDevDependencies": []
+}
+```
+
+**Note:** End users will need to install these packages in their applications. Document this in UPGRADE.md or README.md.
+
+---
+
 ## Validation
 
 After migration, verify:

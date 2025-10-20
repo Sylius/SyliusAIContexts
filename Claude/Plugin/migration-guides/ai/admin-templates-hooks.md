@@ -6,7 +6,53 @@ This guide provides Tool commands to create Twig Hooks structure for admin forms
 
 Hook prefix must be configured in routing (done in routing migration step).
 
-## Step 1: Check if twig_hooks config is imported
+## Step 1: Find ALL resources that need migration
+
+**CRITICAL:** You must migrate ALL resources with admin forms, not just resources with custom templates in `old_templates/`.
+
+### Find all resources:
+
+```bash
+Tool: Read
+File: config/routing/admin.yaml
+```
+
+**Extract ALL resources** that have `hook_prefix` defined. Each resource with `hook_prefix` needs Twig Hooks migration.
+
+**Example:** If routing has:
+```yaml
+plugin_resource_one:
+    vars:
+        all:
+            hook_prefix: 'plugin.admin.resource_one'
+
+plugin_resource_two:
+    vars:
+        all:
+            hook_prefix: 'plugin.admin.resource_two'
+```
+
+Then you have **2 resources** to migrate: `resource_one` and `resource_two`.
+
+**Important notes:**
+- Count ALL resources with `hook_prefix` in routing
+- Old templates in `old_templates/` are NOT relevant for this count
+- You must execute Steps 2-15 FOR EACH resource found
+- Do NOT skip resources that don't have custom templates
+
+### Verify with Form Types:
+
+Cross-check by finding all Form Types:
+
+```bash
+Tool: Glob
+Pattern: *Type.php
+Path: src/Form/Type/
+```
+
+Each Form Type (excluding translation types) typically corresponds to one resource that needs migration.
+
+## Step 2: Check if twig_hooks config is imported
 
 ```bash
 Tool: Read
@@ -42,7 +88,11 @@ New: imports:
 (first line of file)
 ```
 
-## Step 2: Extract resource info
+## Step 3: Extract resource info (FOR EACH RESOURCE)
+
+**Execute Steps 3-15 FOR EACH resource found in Step 1.**
+
+For the current resource you're migrating:
 
 ```bash
 Tool: Read
@@ -100,8 +150,7 @@ sylius_twig_hooks:
 
         '{prefix}.admin.{resource}.create.content.form.sections.general':
             default:
-                enabled: false  # CRITICAL - disable default rendering
-            # Add one hook per field with descending priority
+                enabled: false
             code:
                 template: '@PluginName/admin/{resource}/form/sections/general/code.html.twig'
                 priority: 300
@@ -252,9 +301,13 @@ Content pattern:
 </div>
 ```
 
-## Step 13: Migrate existing templates to Bootstrap 5
+## Step 13: Migrate existing custom templates to Bootstrap 5 (OPTIONAL)
 
-If plugin has existing Semantic UI templates, convert them:
+**Note:** This step is OPTIONAL and only applies if the resource has custom template overrides in `old_templates/`.
+
+**This does NOT affect which resources need Twig Hooks migration** - all resources need Twig Hooks regardless of old_templates.
+
+If the current resource has existing Semantic UI custom templates in `old_templates/`, convert them:
 
 ### Find all admin templates
 
@@ -394,7 +447,7 @@ sylius_twig_hooks:
     hooks:
         '{prefix}.admin.{resource}.create.content.form.sections':
             general:
-                enabled: false  # ← Disable Sylius default "general" section
+                enabled: false
             all_fields:
                 template: '@PluginName/admin/{resource}/form/sections/all_fields.html.twig'
                 priority: 0
@@ -428,3 +481,37 @@ If MCP browser tools are available (mcp__playwright or mcp__chrome-devtools):
 - Navigate to admin create/update forms for the resource
 - Take screenshots to verify forms render correctly
 - Check that all fields display, Bootstrap 5 styling is applied, and translations work
+
+---
+
+## Notes for AI
+
+### Common Mistake: Only Migrating Resources with Custom Templates
+
+**WRONG APPROACH:**
+1. Check `old_templates/` for custom form templates
+2. Only migrate resources that have custom templates
+3. Skip resources without custom templates
+
+**CORRECT APPROACH:**
+1. Read `config/routing/admin.yaml`
+2. Find ALL resources with `hook_prefix` defined
+3. Migrate EVERY resource found, regardless of `old_templates/`
+4. Optionally check `old_templates/` for custom styling to preserve (Step 13)
+
+**Why this matters:**
+- Sylius 2.0 requires Twig Hooks for ALL admin forms
+- `old_templates/` only contains custom template overrides from Sylius 1.x
+- Most resources used default Sylius templates in 1.x (no custom templates)
+- But ALL resources still need Twig Hooks in 2.0
+
+**Example:**
+If a plugin has 3 resources (`ad`, `banner`, `section`) but only `banner` has a custom template in `old_templates/Admin/Banner/_form.html.twig`:
+- ❌ WRONG: Migrate only `banner`
+- ✅ CORRECT: Migrate all 3 resources (`ad`, `banner`, `section`)
+
+### Workflow Summary
+
+1. **Step 1:** Find ALL resources (count them from routing file)
+2. **Steps 2-15:** Execute FOR EACH resource
+3. **Verification:** Check you migrated the same number of resources as found in Step 1
