@@ -10,19 +10,31 @@ This step is OPTIONAL. Execute only if the plugin adds menu items to Sylius admi
 
 ### 1. Check for Removed Menu Events
 
+Search in PHP files (EventSubscribers):
 ```
-Grep: "sylius.menu.admin.customer.show|sylius.menu.admin.order.show|sylius.menu.admin.product.form|sylius.menu.admin.product.update|sylius.menu.admin.product_variant.form|sylius.menu.admin.promotion.update" --include="*.php"
+Grep: "sylius.menu.admin.customer.show|sylius.menu.admin.order.show|sylius.menu.admin.product.form|sylius.menu.admin.product.update|sylius.menu.admin.product_variant.form|sylius.menu.admin.promotion.update" type="php"
+```
+
+Search in config files (EventListeners):
+```
+Grep: "sylius.menu.admin.customer.show|sylius.menu.admin.order.show|sylius.menu.admin.product.form|sylius.menu.admin.product.update|sylius.menu.admin.product_variant.form|sylius.menu.admin.promotion.update" glob="*.{xml,yaml,yml}" path="config/"
 ```
 
 If any of these events are found, they were removed in Sylius 2.0. Note the files for manual migration to Twig Hooks (will be covered in Template Migration step).
 
 ### 2. Find Menu Event Subscribers/Listeners
 
+Search in PHP files (EventSubscribers):
 ```
-Grep: "sylius.menu.admin.main|sylius.menu.shop.account" --include="*.php"
+Grep: "sylius.menu.admin.main|sylius.menu.shop.account" type="php"
 ```
 
-This finds EventSubscribers and Listeners that add menu items.
+Search in config files (EventListeners):
+```
+Grep: "sylius.menu.admin.main|sylius.menu.shop.account" glob="*.{xml,yaml,yml}" path="config/"
+```
+
+This finds all menu implementations (EventSubscribers in PHP, EventListeners in config).
 
 ### 3. Update Menu Icons to Tabler
 
@@ -69,12 +81,12 @@ In the addChild() call, add extras array:
 
 Example:
 ```php
-$item->addChild('terms', [
-    'route' => 'setono_sylius_terms_admin_terms_index',
+$item->addChild('resource', [
+    'route' => 'your_plugin_admin_resource_index',
     'extras' => [
         'routes' => [
-            ['route' => 'setono_sylius_terms_admin_terms_create'],
-            ['route' => 'setono_sylius_terms_admin_terms_update'],
+            ['route' => 'your_plugin_admin_resource_create'],
+            ['route' => 'your_plugin_admin_resource_update'],
         ],
     ],
 ]);
