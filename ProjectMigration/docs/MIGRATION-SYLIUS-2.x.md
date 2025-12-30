@@ -374,9 +374,267 @@ To make a form reactive using Symfony UX LiveComponent:
                    priority: 0
    ```
 
-### 5.2 Menu
+### 5.2 Advanced form types
+
+Sylius 2.x introduces new form types that leverage Symfony UX components.
+
+#### 5.2.1 LiveCollectionType (dynamic collections)
+
+Replace `CollectionType` with `LiveCollectionType` for dynamic form collections.
+
+**PHP Form Type:**
+
+```php
+// Before (Sylius 1.x)
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
+
+$builder->add('images', CollectionType::class, [
+    'entry_type' => ImageType::class,
+    'allow_add' => true,
+    'allow_delete' => true,
+    'by_reference' => false,
+]);
+
+// After (Sylius 2.x)
+use Symfony\UX\LiveComponent\Form\Type\LiveCollectionType;
+
+$builder->add('images', LiveCollectionType::class, [
+    'entry_type' => ImageType::class,
+    'allow_add' => true,
+    'allow_delete' => true,
+    'by_reference' => false,
+]);
+```
+
+**Twig Template:**
+
+```twig
+{# Before (Sylius 1.x) #}
+{{ form_row(form.images) }}
+
+{# After (Sylius 2.x) - render manually with button_add/button_delete #}
+{% for image_form in form.images %}
+    <div class="mb-3">
+        {{ form_row(image_form.file) }}
+        {{ form_widget(image_form.vars.button_delete, {
+            label: 'sylius.ui.delete'|trans,
+            attr: { class: 'btn btn-outline-danger' }
+        }) }}
+    </div>
+{% endfor %}
+
+<div class="d-grid gap-2">
+    {{ form_widget(form.images.vars.button_add) }}
+</div>
+```
+
+Key points:
+- `entry_form.vars.button_delete` - delete button (inside the loop)
+- `form.collection.vars.button_add` - add button (outside the loop)
+
+#### 5.2.2 Autocomplete types
+
+Replace old `*AutocompleteChoiceType` with new `*AutocompleteType` classes that use Symfony UX Autocomplete.
+
+**PHP Form Type:**
+
+```php
+// Before (Sylius 1.x)
+use Sylius\Bundle\AdminBundle\Form\Type\ProductAutocompleteChoiceType;
+
+$builder->add('product', ProductAutocompleteChoiceType::class, [
+    'label' => 'sylius.ui.product',
+    'multiple' => false,
+]);
+
+// After (Sylius 2.x)
+use Sylius\Bundle\AdminBundle\Form\Type\ProductAutocompleteType;
+
+$builder->add('product', ProductAutocompleteType::class, [
+    'label' => 'sylius.ui.product',
+    'multiple' => false,
+]);
+```
+
+For custom autocomplete types, see the official documentation:
+[How to use autocomplete form types](https://docs.sylius.com/the-customization-guide/customizing-forms/how-to-use-autocomplete-form-types)
+
+#### 5.2.3 Extending Sylius LiveComponents
+
+When you need to add custom functionality (like custom LiveActions) to existing Sylius form components, extend the base component class.
+
+**Important:** You must add `ComponentWithFormTrait` to your class, otherwise the form will not work correctly.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Twig\Component\Admin\ProductVariant;
+
+use Sylius\Bundle\AdminBundle\Twig\Component\ProductVariant\FormComponent as BaseFormComponent;
+use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
+use Symfony\UX\LiveComponent\Attribute\LiveAction;
+use Symfony\UX\LiveComponent\ComponentWithFormTrait;
+
+#[AsLiveComponent]
+final class FormComponent extends BaseFormComponent
+{
+    // IMPORTANT: This trait is required for the form to work!
+    use ComponentWithFormTrait;
+
+    public function __construct(
+        // ... parent arguments injected via 'parent' in service config
+        private readonly MyCustomService $customService,
+    ) {
+        parent::__construct(...);
+    }
+
+    #[LiveAction]
+    public function myCustomAction(): void
+    {
+        $this->formValues['fieldName'] = $this->customService->generate();
+    }
+}
+```
+
+Register the component as a service using `parent` to inherit base arguments:
+
+```yaml
+# config/services/twig_component.yaml
+services:
+    app.admin.twig.component.product_variant.form:
+        class: App\Twig\Component\Admin\ProductVariant\FormComponent
+        parent: 'sylius_admin.twig.component.product_variant.form'
+        arguments:
+            - '@app.my_custom_service'
+        tags:
+            - { name: 'sylius.live_component.admin', key: 'app:admin:product_variant:form' }
+```
+
+Update twig hooks to use your custom component:
+
+```yaml
+# config/twig_hooks/admin/product_variant/create.yaml
+sylius_twig_hooks:
+    hooks:
+        'sylius_admin.product_variant.create.content':
+            form:
+                component: 'app:admin:product_variant:form'
+                props:
+                    ...
+                priority: 0
+```
+
+### 5.3 Stimulus controllers
+
+Sylius 2.x uses Stimulus for dynamic UI behavior. Controllers are auto-discovered from `assets/admin/controllers/` directory.
+
+#### Creating a controller
+
+Create a file with `_controller.js` suffix:
+
+**`assets/admin/controllers/char-counter_controller.js`:**
+```javascript
+import { Controller } from '@hotwired/stimulus';
+
+export default class extends Controller {
+    static values = {
+        min: { type: Number, default: 0 },
+        max: { type: Number, default: 100 },
+    };
+    static targets = ['input', 'label'];
+
+    connect() {
+        this.inputTarget.addEventListener('input', this.update.bind(this));
+        this.update();
+    }
+
+    update() {
+        const length = this.inputTarget.value.length;
+        this.labelTarget.textContent = `${length} / ${this.minValue}-${this.maxValue}`;
+    }
+}
+```
+
+#### Using in templates
+
+Use `data-controller` and `data-*-target` attributes:
+
+```twig
+{{ form_row(form.metaDescription, {
+    'row_attr': {
+        'data-controller': 'char-counter',
+        'data-char-counter-min-value': 130,
+        'data-char-counter-max-value': 155,
+    },
+    'attr': {
+        'data-char-counter-target': 'input',
+    },
+    'label_attr': {
+        'data-char-counter-target': 'label',
+    }
+}) }}
+```
+
+For more details, see the official documentation:
+[Customizing dynamic elements](https://docs.sylius.com/the-customization-guide/customizing-dynamic-elements)
+
+### 5.4 Confirmation modals
+
+In Sylius 1.x, confirmation modals were triggered using `data-requires-confirmation` attribute and JavaScript. In Sylius 2.x, use Twig components instead.
+
+**Before (Sylius 1.x):**
+```twig
+<form method="post" action="{{ path('app_admin_resource_delete', {'id': resource.id}) }}">
+    <input type="hidden" name="_method" value="DELETE">
+    <button class="ui red button" type="submit" data-requires-confirmation>
+        <i class="trash alternate icon"></i>
+    </button>
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token(resource.id) }}" />
+</form>
+```
+
+**After (Sylius 2.x):**
+```twig
+{{ component('sylius_admin:delete_modal', {
+    id: resource.id,
+    path: path('app_admin_resource_delete', {'id': resource.id})
+}) }}
+```
+
+The `delete_modal` component automatically generates:
+- A delete button with trash icon
+- A Bootstrap modal with confirmation message
+- A form with DELETE method and CSRF token
+
+Available options:
+```twig
+{{ component('sylius_admin:delete_modal', {
+    id: resource.id,
+    path: path('app_admin_resource_delete', {'id': resource.id}),
+    label: 'sylius.ui.delete',
+    icon: 'tabler:trash-x',
+    disabled: false
+}) }}
+```
+
+### 5.5 Menu
 
 (TODO)
+
+## Step 6: Shop
+
+### 6.1 Confirmation modals
+
+Similar to admin, use Twig components for confirmation modals in shop templates:
+
+```twig
+{{ component('sylius_shop:delete_modal', {
+    id: resource.id,
+    path: path('app_shop_resource_delete', {'id': resource.id})
+}) }}
+```
 
 ## Common issues
 
